@@ -1,0 +1,82 @@
+import tkinter as tk
+from tkinter import messagebox
+
+
+def perform_key_exchange():
+    try:
+        # Считываем публичные данные сети
+        base_g = int(val_generator.get())
+        mod_p = int(val_prime.get())
+
+        # Считываем приватные ключи
+        alice_priv = int(alice_secret.get())
+        bob_priv = int(bob_secret.get())
+
+        # Формирование открытых ключей для передачи
+        alice_public = pow(base_g, alice_priv, mod_p)
+        bob_public = pow(base_g, bob_priv, mod_p)
+
+        # 2 Стороны получают чужой открытый ключ и генерируют общий секрет
+        alice_shared_secret = pow(bob_public, alice_priv, mod_p)
+        bob_shared_secret = pow(alice_public, bob_priv, mod_p)
+
+        # Вывод промежуточных результатов
+        info_var.set(f"Алиса передает: {alice_public} | Боб передает: {bob_public}")
+
+        # Сверка секретов
+        if alice_shared_secret == bob_shared_secret:
+            result_var.set(f"Ключи совпали! Секрет: {alice_shared_secret}")
+            label_final.config(fg="blue")
+        else:
+            result_var.set("Рассинхронизация ключей!")
+            label_final.config(fg="red")
+
+    except ValueError:
+        messagebox.showerror("Ошибка ввода", "Все поля должны содержать только целые числа.")
+
+
+# Основное окно
+window = tk.Tk()
+window.title("Обмен ключами (Diffie-Hellman)")
+window.geometry("400x350")
+
+# Фрейм для общих параметров
+frame_public = tk.LabelFrame(window, text="Открытые параметры сети", padx=10, pady=10)
+frame_public.pack(padx=10, pady=10, fill="x")
+
+tk.Label(frame_public, text="Основание (g):").grid(row=0, column=0)
+val_generator = tk.Entry(frame_public, width=10)
+val_generator.grid(row=0, column=1, padx=5)
+val_generator.insert(0, "5")
+
+tk.Label(frame_public, text="Модуль (p):").grid(row=0, column=2)
+val_prime = tk.Entry(frame_public, width=10)
+val_prime.grid(row=0, column=3, padx=5)
+val_prime.insert(0, "23")
+
+# Фрейм для секретов пользователей
+frame_private = tk.LabelFrame(window, text="Приватные данные (не передаются)", padx=10, pady=10)
+frame_private.pack(padx=10, pady=10, fill="x")
+
+tk.Label(frame_private, text="Секрет Димы (a):").grid(row=0, column=0, pady=5)
+alice_secret = tk.Entry(frame_private, width=15)
+alice_secret.grid(row=0, column=1, padx=10)
+
+tk.Label(frame_private, text="Секрет Егора (b):").grid(row=1, column=0, pady=5)
+bob_secret = tk.Entry(frame_private, width=15)
+bob_secret.grid(row=1, column=1, padx=10)
+
+# Кнопка запуска
+tk.Button(window, text="Запустить обмен", command=perform_key_exchange, width=20).pack(pady=10)
+
+# Вывод результатов через StringVar
+info_var = tk.StringVar()
+info_var.set("Ожидание данных...")
+tk.Label(window, textvariable=info_var).pack(pady=5)
+
+result_var = tk.StringVar()
+result_var.set("Итоговый ключ: ?")
+label_final = tk.Label(window, textvariable=result_var, font=("Verdana", 11, "bold"))
+label_final.pack(pady=10)
+
+window.mainloop()
